@@ -1,4 +1,4 @@
-package btree
+package tinydb
 
 import (
 	"fmt"

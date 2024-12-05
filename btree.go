@@ -1,6 +1,8 @@
-package btree
+package tinydb
 
-import "bytes"
+import (
+	"bytes"
+)
 
 const (
 	BTREE_PAGE_SIZE           = 4096 // page size is defined to 4K
