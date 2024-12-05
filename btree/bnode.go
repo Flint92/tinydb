@@ -15,6 +15,10 @@ type BNode struct {
 	data []byte // can be dumped to the disk
 }
 
+func NewBNode(data []byte) BNode {
+	return BNode{data: data}
+}
+
 // header
 func (node BNode) btype() uint16 {
 	return binary.LittleEndian.Uint16(node.data)
@@ -164,16 +168,16 @@ func nodeSplit3(old BNode) (uint16, [3]BNode) {
 		return 1, [3]BNode{old}
 	}
 
-	left := BNode{make([]byte, BTREE_PAGE_SIZE<<1)} // might be split later
-	right := BNode{make([]byte, BTREE_PAGE_SIZE)}
+	left := NewBNode(make([]byte, BTREE_PAGE_SIZE<<1)) // might be split later
+	right := NewBNode(make([]byte, BTREE_PAGE_SIZE))
 	nodeSplit2(left, right, old)
 	if left.nbytes() <= BTREE_PAGE_SIZE {
 		left.data = left.data[:BTREE_PAGE_SIZE]
 		return 2, [3]BNode{left, right}
 	}
 	// the left node is still too large
-	leftleft := BNode{make([]byte, BTREE_PAGE_SIZE)}
-	middle := BNode{make([]byte, BTREE_PAGE_SIZE)}
+	leftleft := NewBNode(make([]byte, BTREE_PAGE_SIZE))
+	middle := NewBNode(make([]byte, BTREE_PAGE_SIZE))
 	nodeSplit2(leftleft, middle, left)
 
 	return 3, [3]BNode{leftleft, middle, right}

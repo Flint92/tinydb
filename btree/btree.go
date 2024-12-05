@@ -52,7 +52,7 @@ func (tree *BTree) Insert(key, value []byte) {
 
 	if tree.root == 0 {
 		// create the first node
-		root := BNode{make([]byte, BTREE_PAGE_SIZE)}
+		root := NewBNode(make([]byte, BTREE_PAGE_SIZE))
 		root.setHeader(BNODE_LEAF, 2)
 		// a dummy key, this makes the tree cover the whole key space
 		// thus a lookup can always find a containing node.
@@ -69,7 +69,7 @@ func (tree *BTree) Insert(key, value []byte) {
 	nsplit, splitted := nodeSplit3(node)
 	if nsplit > 1 {
 		// the root was split, add a new level
-		root := BNode{make([]byte, BTREE_PAGE_SIZE)}
+		root := NewBNode(make([]byte, BTREE_PAGE_SIZE))
 		root.setHeader(BNODE_NODE, nsplit)
 		for i, knode := range splitted {
 			ptr, kk := tree.new(knode), knode.getKey(0)
@@ -88,7 +88,7 @@ func (tree *BTree) Insert(key, value []byte) {
 func treeInsert(tree *BTree, node BNode, key, val []byte) BNode {
 	// the result node
 	// it's allowed to be bigger than 1 page and will be split if so
-	newNode := BNode{make([]byte, BTREE_PAGE_SIZE<<1)}
+	newNode := NewBNode(make([]byte, BTREE_PAGE_SIZE<<1))
 
 	// where to insert the key?
 	idx := nodeLookupLE(node, key)
@@ -123,7 +123,7 @@ func treeDelete(tree *BTree, node BNode, key []byte) BNode {
 			return BNode{} // not found
 		}
 		// delete the key in the leaf
-		newNode := BNode{make([]byte, BTREE_PAGE_SIZE)}
+		newNode := NewBNode(make([]byte, BTREE_PAGE_SIZE))
 		leafDelete(newNode, node, idx)
 		return newNode
 	case BNODE_NODE:
@@ -143,16 +143,16 @@ func nodeDelete(tree *BTree, node BNode, idx uint16, key []byte) BNode {
 
 	tree.del(kptr)
 
-	newNode := BNode{make([]byte, BTREE_PAGE_SIZE)}
+	newNode := NewBNode(make([]byte, BTREE_PAGE_SIZE))
 	// check for merging
 	mergeDir, sibling := shouldMerge(tree, node, idx, updated)
 	if mergeDir < 0 { // left
-		merged := BNode{make([]byte, BTREE_PAGE_SIZE)}
+		merged := NewBNode(make([]byte, BTREE_PAGE_SIZE))
 		nodeMerge(merged, sibling, updated)
 		tree.del(node.getPtr(idx - 1))
 		nodeReplaceKid2(newNode, node, idx-1, tree.new(merged), merged.getKey(0))
 	} else if mergeDir > 0 { // right
-		merged := BNode{make([]byte, BTREE_PAGE_SIZE)}
+		merged := NewBNode(make([]byte, BTREE_PAGE_SIZE))
 		nodeMerge(merged, updated, sibling)
 		tree.del(node.getPtr(idx + 1))
 		nodeReplaceKid2(newNode, node, idx, tree.new(merged), merged.getKey(0))
