@@ -3,7 +3,6 @@ package btree
 import "bytes"
 
 const (
-	HEADER                    = 4
 	BTREE_PAGE_SIZE           = 4096 // page size is defined to 4K
 	BTREE_PAGE_MAX_KEY_SIZE   = 1000
 	BTREE_PAGE_MAX_VALUE_SIZE = 3000
@@ -147,18 +146,17 @@ func nodeDelete(tree *BTree, node BNode, idx uint16, key []byte) BNode {
 	newNode := BNode{make([]byte, BTREE_PAGE_SIZE)}
 	// check for merging
 	mergeDir, sibling := shouldMerge(tree, node, idx, updated)
-	switch {
-	case mergeDir < 0: // left
+	if mergeDir < 0 { // left
 		merged := BNode{make([]byte, BTREE_PAGE_SIZE)}
 		nodeMerge(merged, sibling, updated)
 		tree.del(node.getPtr(idx - 1))
 		nodeReplaceKid2(newNode, node, idx-1, tree.new(merged), merged.getKey(0))
-	case mergeDir > 0: // right
+	} else if mergeDir > 0 { // right
 		merged := BNode{make([]byte, BTREE_PAGE_SIZE)}
 		nodeMerge(merged, updated, sibling)
 		tree.del(node.getPtr(idx + 1))
 		nodeReplaceKid2(newNode, node, idx, tree.new(merged), merged.getKey(0))
-	case mergeDir == 0:
+	} else {
 		if updated.nkeys() == 0 {
 			// kid is empty after deletion and has no sibling to merge with.
 			// this happens when its parent has only one kid.
@@ -196,13 +194,6 @@ func shouldMerge(tree *BTree, node BNode, idx uint16, updated BNode) (int, BNode
 	return 0, BNode{}
 }
 
-// merge 2 node into 1
-func nodeMerge(new, left, right BNode) {
-	new.setHeader(left.btype(), left.nkeys()+right.btype())
-	nodeAppendRange(new, left, 0, 0, left.nkeys())
-	nodeAppendRange(new, right, left.nkeys(), 0, right.nkeys())
-}
-
 func nodeReplaceKid2(new BNode, old BNode, idx uint16, merged uint64, key []byte) {
 	new.setHeader(BNODE_NODE, old.nkeys()-1)
 	nodeAppendRange(new, old, 0, 0, idx)
@@ -221,53 +212,6 @@ func nodeInsert(tree *BTree, new, node BNode, idx uint16, key, val []byte) {
 	nsplit, splited := nodeSplit3(knode)
 	// update the kid links
 	nodeReplaceKidN(tree, new, node, idx, splited[:nsplit]...)
-}
-
-// split a node if it's too big, the result are 1-3 nodes
-func nodeSplit3(old BNode) (uint16, [3]BNode) {
-	if old.nbytes() <= BTREE_PAGE_SIZE {
-		old.data = old.data[:BTREE_PAGE_SIZE]
-		return 1, [3]BNode{old}
-	}
-
-	left := BNode{make([]byte, BTREE_PAGE_SIZE<<1)} // might be split later
-	right := BNode{make([]byte, BTREE_PAGE_SIZE)}
-	nodeSplit2(left, right, old)
-	if left.nbytes() <= BTREE_PAGE_SIZE {
-		left.data = left.data[:BTREE_PAGE_SIZE]
-		return 2, [3]BNode{left, right}
-	}
-	// the left node is still too large
-	leftleft := BNode{make([]byte, BTREE_PAGE_SIZE)}
-	middle := BNode{make([]byte, BTREE_PAGE_SIZE)}
-	nodeSplit2(leftleft, middle, left)
-
-	return 3, [3]BNode{leftleft, middle, right}
-}
-
-func nodeSplit2(left, right, old BNode) {
-	nkeys := old.nkeys()
-	nbytes := old.nbytes()
-
-	rightCount := uint16(1)
-	for ; rightCount <= nkeys; rightCount++ {
-		rightBytes := HEADER + 8*rightCount + 2*rightCount + (nbytes - old.getOffset(nkeys-rightCount))
-		if rightBytes == BTREE_PAGE_SIZE {
-			break
-		}
-		if rightBytes > BTREE_PAGE_SIZE {
-			rightCount -= 1
-			break
-		}
-	}
-
-	idx := nkeys - rightCount
-
-	left.setHeader(old.btype(), idx)
-	nodeAppendRange(left, old, 0, 0, idx)
-
-	right.setHeader(old.btype(), nkeys-idx)
-	nodeAppendRange(right, old, 0, idx, nkeys-idx)
 }
 
 // replace a link with multiple links

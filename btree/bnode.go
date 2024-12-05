@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	HEADER     = 4
 	BNODE_NODE = 1 // internal nodes without values
 	BNODE_LEAF = 2 // leaf nodes with values
 )
@@ -79,7 +80,6 @@ func (node BNode) nbytes() uint16 {
 }
 
 // returns the first kid node whose range intersects the key. (kid[i] <= key)
-// TODO: bisect
 func nodeLookupLE(node BNode, key []byte) uint16 {
 	nkeys := node.nkeys()
 	found := uint16(0)
@@ -155,4 +155,58 @@ func nodeAppendKV(new BNode, idx uint16, ptr uint64, key, value []byte) {
 	copy(new.data[pos+4+uint16(len(key)):], value)
 	// the offset of the next key
 	new.setOffset(idx+1, new.getOffset(idx)+4+uint16(len(key)+len(value)))
+}
+
+// split a node if it's too big, the result are 1-3 nodes
+func nodeSplit3(old BNode) (uint16, [3]BNode) {
+	if old.nbytes() <= BTREE_PAGE_SIZE {
+		old.data = old.data[:BTREE_PAGE_SIZE]
+		return 1, [3]BNode{old}
+	}
+
+	left := BNode{make([]byte, BTREE_PAGE_SIZE<<1)} // might be split later
+	right := BNode{make([]byte, BTREE_PAGE_SIZE)}
+	nodeSplit2(left, right, old)
+	if left.nbytes() <= BTREE_PAGE_SIZE {
+		left.data = left.data[:BTREE_PAGE_SIZE]
+		return 2, [3]BNode{left, right}
+	}
+	// the left node is still too large
+	leftleft := BNode{make([]byte, BTREE_PAGE_SIZE)}
+	middle := BNode{make([]byte, BTREE_PAGE_SIZE)}
+	nodeSplit2(leftleft, middle, left)
+
+	return 3, [3]BNode{leftleft, middle, right}
+}
+
+func nodeSplit2(left, right, old BNode) {
+	nkeys := old.nkeys()
+	nbytes := old.nbytes()
+
+	rightCount := uint16(1)
+	for ; rightCount <= nkeys; rightCount++ {
+		rightBytes := HEADER + 8*rightCount + 2*rightCount + (nbytes - old.getOffset(nkeys-rightCount))
+		if rightBytes == BTREE_PAGE_SIZE {
+			break
+		}
+		if rightBytes > BTREE_PAGE_SIZE {
+			rightCount -= 1
+			break
+		}
+	}
+
+	idx := nkeys - rightCount
+
+	left.setHeader(old.btype(), idx)
+	nodeAppendRange(left, old, 0, 0, idx)
+
+	right.setHeader(old.btype(), nkeys-idx)
+	nodeAppendRange(right, old, 0, idx, nkeys-idx)
+}
+
+// merge 2 node into 1
+func nodeMerge(new, left, right BNode) {
+	new.setHeader(left.btype(), left.nkeys()+right.btype())
+	nodeAppendRange(new, left, 0, 0, left.nkeys())
+	nodeAppendRange(new, right, left.nkeys(), 0, right.nkeys())
 }
