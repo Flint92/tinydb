@@ -19,6 +19,19 @@ type BTree struct {
 	del func(uint64)       // deallocate a page
 }
 
+func (tree *BTree) Get(key []byte) ([]byte, bool) {
+	if len(key) == 0 || len(key) > BTREE_PAGE_MAX_KEY_SIZE {
+		panic("bad key!")
+	}
+
+	if tree.root == 0 {
+		return nil, false
+	}
+
+	node := tree.get(tree.root)
+	return treeGet(tree, node, key)
+}
+
 func (tree *BTree) Delete(key []byte) bool {
 	if len(key) == 0 || len(key) > BTREE_PAGE_MAX_KEY_SIZE {
 		panic("bad key!")
@@ -82,6 +95,28 @@ func (tree *BTree) Insert(key, value []byte) {
 		tree.root = tree.new(splitted[0])
 	}
 
+}
+
+func treeGet(tree *BTree, node BNode, key []byte) ([]byte, bool) {
+	idx := nodeLookupLE(node, key)
+
+	switch node.btype() {
+	case BNODE_LEAF:
+		if !bytes.Equal(key, node.getKey(idx)) {
+			return nil, false
+		}
+
+		val := node.getVal(idx)
+		return val, true
+	case BNODE_NODE:
+		ptr := node.getPtr(idx)
+		if ptr == 0 {
+			return nil, false
+		}
+		nextNode := tree.get(ptr)
+		return treeGet(tree, nextNode, key)
+	}
+	panic("bad node!")
 }
 
 // insert a KV into a node, the result might be split into 2 nodes
