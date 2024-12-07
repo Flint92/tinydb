@@ -51,7 +51,7 @@ func TestKv(t *testing.T) {
 		}
 	}
 
-	deleted, _ := db.Delete([]byte("1"))
+	deleted, _ := db.Delete([]byte("3"))
 	if !deleted {
 		log.Fatal("must deleted")
 	}
@@ -68,8 +68,8 @@ func TestKv(t *testing.T) {
 	}{
 		{
 			key:    "1",
-			exists: false,
-			value:  nil,
+			exists: true,
+			value:  []byte("Bobby"),
 		},
 		{
 			key:    "2",
@@ -78,8 +78,8 @@ func TestKv(t *testing.T) {
 		},
 		{
 			key:    "3",
-			exists: true,
-			value:  []byte("Han Meimei"),
+			exists: false,
+			value:  nil,
 		},
 		{
 			key:    "4",
