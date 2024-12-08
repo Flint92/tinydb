@@ -79,6 +79,11 @@ func decodeValues(in []byte, out []Value) []Value {
 			valDef.I64 = v
 			cur += 8
 		}
+
+		if TYPE_ERROR == valDef.Type {
+			panic("bad type")
+		}
+
 		result = append(result, valDef)
 	}
 	return result
