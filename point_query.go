@@ -89,20 +89,17 @@ func unescapeString(in []byte) []byte {
 	i := 0
 	for i < len(in) {
 		if in[i] == 0x01 && i+1 < len(in) {
-			// 检查转义序列
 			if in[i+1] == 0x01 {
-				out = append(out, 0) // 还原为0
-				i += 2               // 跳过转义序列
+				out = append(out, 0)
+				i += 2
 			} else if in[i+1] == 0x02 {
-				out = append(out, 1) // 还原为1
-				i += 2               // 跳过转义序列
+				out = append(out, 1)
+				i += 2
 			} else {
-				// 不是有效的转义序列，直接复制当前字节
 				out = append(out, in[i])
 				i++
 			}
 		} else {
-			// 直接复制当前字节
 			out = append(out, in[i])
 			i++
 		}
