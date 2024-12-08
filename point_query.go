@@ -107,7 +107,7 @@ func unescapeString(in []byte) []byte {
 	return out
 }
 
-// Strings are encoded as nul terminated strings,
+// Strings are encoded as null terminated strings,
 // escape the nul byte so that strings contain no nul byte.
 func escapeString(in []byte) []byte {
 	zeros := bytes.Count(in, []byte{0})
