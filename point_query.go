@@ -62,25 +62,22 @@ func decodeValues(in []byte, out []Value) []Value {
 	var cur int
 	var result []Value
 	for _, valDef := range out {
-		if TYPE_BYTES == valDef.Type {
+		switch valDef.Type {
+		case TYPE_BYTES:
 			nullTerm := cur
 			for nullTerm < len(in) && in[nullTerm] != 0 {
 				nullTerm++
 			}
 			str := unescapeString(in[cur:nullTerm])
 			valDef.Str = str
-			cur = nullTerm + 1 // 移动到下一个值的位置
-
-		}
-		if TYPE_INT64 == valDef.Type {
+			cur = nullTerm + 1
+		case TYPE_INT64:
 			buf := in[cur : cur+8]
 			u := binary.BigEndian.Uint64(buf)
 			v := int64(u - (1 << 63))
 			valDef.I64 = v
 			cur += 8
-		}
-
-		if TYPE_ERROR == valDef.Type {
+		default:
 			panic("bad type")
 		}
 
