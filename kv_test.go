@@ -92,4 +92,37 @@ func TestKv(t *testing.T) {
 			log.Fatal("key:", test.key, " exists:", test.exists, " value:", string(got1))
 		}
 	}
+
+	_ = db.Set([]byte("3"), []byte("Xiao Ming"))
+	tests = []struct {
+		key    string
+		exists bool
+		value  []byte
+	}{
+		{
+			key:    "1",
+			exists: true,
+			value:  []byte("Bobby"),
+		},
+		{
+			key:    "2",
+			exists: true,
+			value:  []byte("Li Lei"),
+		},
+		{
+			key:    "3",
+			exists: true,
+			value:  []byte("Xiao Ming"),
+		},
+		{
+			key:    "4",
+			exists: false,
+			value:  nil,
+		},
+	}
+	for _, test := range tests {
+		if got1, got2 := db.Get([]byte(test.key)); got2 != test.exists || !bytes.Equal(got1, test.value) {
+			log.Fatal("key:", test.key, " exists:", test.exists, " value:", string(got1))
+		}
+	}
 }

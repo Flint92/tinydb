@@ -23,6 +23,7 @@ func masterLoad(db *KV) error {
 	data := db.mmap.chunks[0]
 	root := binary.LittleEndian.Uint64(data[16:])
 	used := binary.LittleEndian.Uint64(data[24:])
+	freeList := binary.LittleEndian.Uint64(data[32:])
 
 	sig := make([]byte, 16)
 	copy(sig[:], []byte(DB_SIG))
@@ -32,22 +33,24 @@ func masterLoad(db *KV) error {
 	}
 
 	bad := !(1 <= used && used <= uint64(db.mmap.file/BTREE_PAGE_SIZE))
-	bad = bad || !(0 <= root && root < used)
+	bad = bad || !(0 <= root && root < (used+freeList))
 	if bad {
 		return errors.New("bad master page")
 	}
 
 	db.tree.root = root
 	db.page.flushed = used
+	db.free.head = freeList
 	return nil
 }
 
 // update the master page. it must be atomic
 func materStore(db *KV) error {
-	var data [32]byte
+	var data [40]byte
 	copy(data[:16], []byte(DB_SIG))
 	binary.LittleEndian.PutUint64(data[16:], db.tree.root)
 	binary.LittleEndian.PutUint64(data[24:], db.page.flushed)
+	binary.LittleEndian.PutUint64(data[32:], db.free.head)
 
 	// NOTE: Updating the page via mmap is not atomic.
 	// 		 Use the `pwrite()` syscall instead

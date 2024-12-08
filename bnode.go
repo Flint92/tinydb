@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	HEADER     = 4
+	HEADER     = 4 // type(2B) + size(2B)
 	BNODE_NODE = 1 // internal nodes without values
 	BNODE_LEAF = 2 // leaf nodes with values
 )

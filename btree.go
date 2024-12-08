@@ -20,9 +20,7 @@ type BTree struct {
 }
 
 func (tree *BTree) Get(key []byte) ([]byte, bool) {
-	if len(key) == 0 || len(key) > BTREE_PAGE_MAX_KEY_SIZE {
-		panic("bad key!")
-	}
+	assert(len(key) > 0 && len(key) <= BTREE_PAGE_MAX_KEY_SIZE, "bad key!")
 
 	if tree.root == 0 {
 		return nil, false
@@ -33,9 +31,7 @@ func (tree *BTree) Get(key []byte) ([]byte, bool) {
 }
 
 func (tree *BTree) Delete(key []byte) bool {
-	if len(key) == 0 || len(key) > BTREE_PAGE_MAX_KEY_SIZE {
-		panic("bad key!")
-	}
+	assert(len(key) > 0 && len(key) <= BTREE_PAGE_MAX_KEY_SIZE, "bad key!")
 
 	if tree.root == 0 {
 		return false
@@ -58,12 +54,8 @@ func (tree *BTree) Delete(key []byte) bool {
 }
 
 func (tree *BTree) Insert(key, value []byte) {
-	if len(key) == 0 || len(key) > BTREE_PAGE_MAX_KEY_SIZE {
-		panic("bad key!")
-	}
-	if len(value) > BTREE_PAGE_MAX_VALUE_SIZE {
-		panic("bad value!")
-	}
+	assert(len(key) > 0 && len(key) <= BTREE_PAGE_MAX_KEY_SIZE, "bad key!")
+	assert(len(value) <= BTREE_PAGE_MAX_VALUE_SIZE, "bad value!")
 
 	if tree.root == 0 {
 		// create the first node
