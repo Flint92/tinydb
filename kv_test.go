@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-const DB_PATH = "archive/testdb"
+const KV_PATH = "archive/testkv"
 
 func TestKv(t *testing.T) {
 	phrase1(t)
@@ -15,7 +15,7 @@ func TestKv(t *testing.T) {
 }
 
 func phrase2(t *testing.T) {
-	db, err := NewDB(DB_PATH)
+	db, err := NewDB(KV_PATH)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,7 +94,7 @@ func phrase2(t *testing.T) {
 }
 
 func phrase1(t *testing.T) {
-	db, err := NewDB(DB_PATH)
+	db, err := NewDB(KV_PATH)
 	if err != nil {
 		t.Fatal(err)
 	}
