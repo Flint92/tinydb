@@ -7,7 +7,7 @@ import (
 	"unsafe"
 )
 
-func fallocate(file *os.File, offset int64, length int64) error {
+func fallocate(file *os.File, offset, length int64) error {
 	var fst syscall.Fstore_t
 
 	fst.Flags = syscall.F_ALLOCATECONTIG

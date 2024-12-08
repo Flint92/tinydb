@@ -5,7 +5,7 @@ import (
 	"syscall"
 )
 
-func fallocate(file *os.File, offset int64, length int64) error {
+func fallocate(file *os.File, offset, length int64) error {
 	if length == 0 {
 		return nil
 	}
