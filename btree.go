@@ -60,11 +60,8 @@ func (tree *BTree) Insert(key, value []byte) {
 	if tree.root == 0 {
 		// create the first node
 		root := NewBNode(make([]byte, BTREE_PAGE_SIZE))
-		root.setHeader(BNODE_LEAF, 2)
-		// a dummy key, this makes the tree cover the whole key space
-		// thus a lookup can always find a containing node.
-		nodeAppendKV(root, 0, 0, nil, nil)
-		nodeAppendKV(root, 1, 0, key, value)
+		root.setHeader(BNODE_LEAF, 1)
+		nodeAppendKV(root, 0, 0, key, value)
 		tree.root = tree.new(root)
 		return
 	}
